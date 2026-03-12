@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>AI Human Game v2.0</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 600px;
+    height: 900px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Tab Navigation */
+.tab-nav {
+    display: flex;
+    background: #f3f4f6;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px 20px;
+    background: #e5e7eb;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #6b7280;
+    text-align: center;
+}
+
+.tab-btn:first-child {
+    border-top-left-radius: 20px;
+}
+
+.tab-btn:last-child {
+    border-top-right-radius: 20px;
+}
+
+.tab-btn:hover {
+    background: #d1d5db;
+}
+
+.tab-btn.active {
+    background: white;
+    color: #333;
+    border-bottom-color: #10b981;
+}
+
+.tab-btn.active.human-tab {
+    border-bottom-color: #10b981;
+    color: #10b981;
+}
+
+.tab-btn.active.ai-tab {
+    border-bottom-color: #8b5cf6;
+    color: #8b5cf6;
+}
+
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.header.human {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.header.ai {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.header h1 {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.header .role-badge {
+    font-size: 12px;
+    background: rgba(255,255,255,0.2);
+    padding: 3px 10px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.status {
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    background: rgba(255,255,255,0.2);
+    margin-top: 5px;
+}
+
+.status.connected {
+    background: #10b981;
+}
+
+.status.waiting {
+    background: #f59e0b;
+}
+
+.status.disconnected {
+    background: #ef4444;
+}
+
+#chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f5f5f5;
+}
+
+.message {
+    margin-bottom: 15px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message.system {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    font-size: 14px;
+}
+
+.message.partner {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.message.partner .bubble {
+    background: white;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.message.me {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.message.me .bubble {
+    background: #667eea;
+    color: white;
+}
+
+.message.me.human .bubble {
+    background: #10b981;
+}
+
+.message.me.ai .bubble {
+    background: #8b5cf6;
+}
+
+.bubble {
+    display: inline-block;
+    padding: 10px 15px;
+    border-radius: 18px;
+    max-width: 70%;
+    word-wrap: break-word;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.typing-indicator {
+    padding: 10px 20px;
+    color: #666;
+    font-style: italic;
+    font-size: 14px;
+    display: none;
+    background: #f9fafb;
+}
+
+.typing-indicator.show {
+    display: block;
+}
+
+.input-area {
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #ddd;
+}
+
+.input-container {
+    display: flex;
+    gap: 10px;
+}
+
+#msg {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 25px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+#msg:focus {
+    border-color: #667eea;
+}
+
+#msg:focus.human {
+    border-color: #10b981;
+}
+
+#msg:focus.ai {
+    border-color: #8b5cf6;
+}
+
+button {
+    padding: 12px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+button.human-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+button.human-btn:hover {
+    box-shadow: 0 5px 15px rgba(16,185,129,0.4);
+}
+
+button.ai-btn {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+button.ai-btn:hover {
+    box-shadow: 0 5px 15px rgba(139,92,246,0.4);
+}
+
+.hint {
+    margin-top: 10px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+}
+
+.char-counter {
+    text-align: right;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #999;
+}
+
+.char-counter.warning {
+    color: #f59e0b;
+}
+
+.char-counter.error {
+    color: #ef4444;
+}
+
+.timer-box {
+    display: none;
+    background: white;
+    border-radius: 8px;
+    padding: 0px 20px;
+    margin: 0 20px 10px 20px;
+}
+
+.timer-box.show {
+    display: block;
+}
+
+.timer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #333;
+}
+
+.timer-label {
+    font-weight: 500;
+}
+
+.timer-value {
+    font-weight: 700;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 20px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #d1d5db;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    transition: width 0.3s ease, background 0.3s ease;
+    border-radius: 10px;
+}
+
+.progress-bar.warning {
+    background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.progress-bar.danger {
+    background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+    animation: pulse 1s infinite;
+}
+
+/* AI Response Area */
+.input-area-ai {
+    display: none;
+    background: white;
+    border-top: 1px solid #ddd;
+}
+
+.input-area-ai.active {
+    display: block;
+}
+
+.response-tabs {
+    display: flex;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.response-tab {
+    flex: 1;
+    padding: 15px;
+    background: #f3f4f6;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #6b7280;
+}
+
+.response-tab.active {
+    background: white;
+    color: #8b5cf6;
+    border-bottom: 3px solid #8b5cf6;
+}
+
+.response-content {
+    padding: 20px;
+}
+
+.response-panel {
+    display: none;
+}
+
+.response-panel.active {
+    display: block;
+}
+
+#aiTextarea {
+    width: 100%;
+    min-height: 80px;
+    max-height: 120px;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+#aiTextarea:focus {
+    border-color: #8b5cf6;
+}
+
+#drawCanvas {
+    width: 100%;
+    height: 150px;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    cursor: crosshair;
+    background: white;
+    touch-action: none;
+}
+
+.canvas-tools {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.tool-btn {
+    padding: 8px 16px;
+    border: 2px solid #8b5cf6;
+    background: white;
+    color: #8b5cf6;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.tool-btn:hover, .tool-btn.active {
+    background: #8b5cf6;
+    color: white;
+}
+
+.color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#colorPicker {
+    width: 40px;
+    height: 35px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.ai-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.ai-actions button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.submit-btn:hover {
+    box-shadow: 0 5px 15px rgba(251,191,36,0.4);
+}
+
+.skip-btn {
+    background: white;
+    color: #333;
+    border: 2px solid #ddd;
+}
+
+.skip-btn:hover {
+    background: #f3f4f6;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.report-btn {
+    background: #f87171;
+}
+
+.report-btn:hover {
+    background: #ef4444;
+    box-shadow: 0 5px 15px rgba(248,113,113,0.4);
+}
+
+/* Skip Warning Popup */
+.skip-popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    z-index: 1000;
+    max-width: 400px;
+    width: 90%;
+}
+
+.skip-popup.show {
+    display: block;
+    animation: popupSlide 0.3s ease;
+}
+
+@keyframes popupSlide {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -40%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+.popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+}
+
+.popup-overlay.show {
+    display: block;
+}
+
+.popup-header {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.popup-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    background: white;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.popup-close:hover {
+    background: #f3f4f6;
+    border-color: #999;
+}
+
+.popup-text {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.popup-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.ai-char-counter {
+    text-align: right;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #999;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+        <button class="tab-btn human-tab active" onclick="switchRole('human')">
+            human
+        </button>
+        <button class="tab-btn ai-tab" onclick="switchRole('ai')">
+            larp as ai
+        </button>
+    </div>
+
+    <div class="header" id="header">
+        <h1>🎮 AI Human Game</h1>
+        <span class="role-badge" id="roleBadge">HUMAN - Người hỏi</span>
+        <div class="status" id="status">Đang chờ đối thủ...</div>
+    </div>
+
+    <div id="chat"></div>
+    
+    <div class="timer-box" id="timerBox">
+        <div class="timer-header">
+            <span class="timer-label">time left</span>
+            <span class="timer-value" id="timerValue">60s</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar" style="width: 100%;"></div>
+        </div>
+    </div>
+    
+    <div class="typing-indicator" id="typing">Đối phương đang nhập...</div>
+
+    <!-- Input Area for Human Role -->
+    <div class="input-area" id="inputAreaHuman">
+        <div class="input-container">
+            <input id="msg" placeholder="Đặt câu hỏi để tìm ra AI..." maxlength="200" disabled>
+            <button onclick="send()" id="sendBtn" class="human-btn" disabled>Gửi</button>
+        </div>
+        <div class="char-counter" id="charCounter">0 / 200</div>
+        <div class="hint" id="hint">💡 Đặt câu hỏi thông minh để phát hiện AI</div>
+    </div>
+
+    <!-- Input Area for AI Role -->
+    <div class="input-area-ai" id="inputAreaAI">
+        <div class="response-tabs">
+            <button class="response-tab active" onclick="switchResponseTab('write')">write</button>
+            <button class="response-tab" onclick="switchResponseTab('draw')">draw</button>
+        </div>
+        
+        <div class="response-content">
+            <!-- Write Panel -->
+            <div class="response-panel active" id="writePanel">
+                <textarea id="aiTextarea" placeholder='type here mr "ai"' maxlength="1000" disabled></textarea>
+                <div class="ai-char-counter" id="aiCharCounter">0/1000 chars</div>
+            </div>
+            
+            <!-- Draw Panel -->
+            <div class="response-panel" id="drawPanel">
+                <div class="canvas-tools">
+                    <button class="tool-btn active" id="penTool" onclick="selectTool('pen')">✏️ Pen</button>
+                    <button class="tool-btn" id="eraserTool" onclick="selectTool('eraser')">🧹 Eraser</button>
+                    <button class="tool-btn" onclick="clearCanvas()">🗑️ Clear</button>
+                    <div class="color-picker-wrapper">
+                        <label>Color:</label>
+                        <input type="color" id="colorPicker" value="#000000">
+                    </div>
+                </div>
+                <canvas id="drawCanvas" width="560" height="200"></canvas>
+            </div>
+            
+            <div class="ai-actions">
+                <button class="submit-btn" onclick="submitAIResponse()" id="aiSubmitBtn" disabled>submit</button>
+                <button class="skip-btn" onclick="showSkipPopup()" id="skipBtn" disabled>skip</button>
+                <button class="report-btn" onclick="reportQuestion()" id="reportBtn" disabled>report</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Skip Warning Popup -->
+<div class="popup-overlay" id="popupOverlay" onclick="hideSkipPopup()"></div>
+<div class="skip-popup" id="skipPopup">
+    <button class="popup-close" onclick="hideSkipPopup()">✕</button>
+    <div class="popup-header">skip prompts you can't answer!</div>
+    <div class="popup-text">you won't be placed back in the queue and will receive the next available prompt if you skip quickly!</div>
+    <div class="popup-actions">
+        <button class="popup-btn skip-btn" onclick="confirmSkip()">skip anyway</button>
+        <button class="popup-btn submit-btn" onclick="hideSkipPopup()">go back</button>
+    </div>
+</div>
+
+<script>
+// Configuration
+// WebSocket Server URL - Update this with your Render.com backend URL
+// Example: wss://ai-human-game.onrender.com (NO PORT NUMBER)
+const WS_SERVER = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'ws://localhost:3000'                                    // Local development
+    : 'wss://YOUR-APP-NAME.onrender.com';                      // Production - REPLACE WITH YOUR RENDER URL
+
+const MAX_CHARS = 200;
+const ANSWER_TIMEOUT = 60; // seconds
+
+let socket;
+let currentRole = 'human'; // Default role
+let isMatched = false;
+let typingTimeout;
+let answerTimer = null;
+let timeLeft = ANSWER_TIMEOUT;
+let chatHistory = []; // Store chat history
+let switchRoleCountdown = null; // Countdown timer for role switch
+
+// Bad words list (basic filter)
+const BAD_WORDS = ['fuck', 'shit', 'damn', 'bitch', 'ass']; // Thêm từ tiếng Việt nếu cần
+
+// Switch between Human and AI roles
+function switchRole(role) {
+    // If currently matched, show countdown before switching
+    if (isMatched) {
+        const confirmSwitch = confirm(`Bạn đang trong trận! Đổi vai trò sẽ mất kết nối và phải chờ 5s. Tiếp tục?`);
+        if (!confirmSwitch) return;
+        
+        // Show countdown overlay
+        showRoleSwitchCountdown(role);
+        return;
+    }
+    
+    // Normal switch when not matched
+    performRoleSwitch(role);
+}
+
+function showRoleSwitchCountdown(targetRole) {
+    // Create countdown overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'switchOverlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+    `;
+    
+    const countdownText = document.createElement('div');
+    countdownText.style.cssText = `
+        font-size: 80px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    `;
+    countdownText.textContent = '5';
+    
+    const messageText = document.createElement('div');
+    messageText.style.cssText = `
+        font-size: 20px;
+    `;
+    messageText.textContent = 'Đang chuyển vai trò...';
+    
+    overlay.appendChild(countdownText);
+    overlay.appendChild(messageText);
+    document.body.appendChild(overlay);
+    
+    // Disconnect from current match
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.onclose = null;
+        socket.close();
+    }
+    isMatched = false;
+    stopAnswerTimer();
+    
+    // Countdown
+    let countdown = 5;
+    switchRoleCountdown = setInterval(() => {
+        countdown--;
+        countdownText.textContent = countdown;
+        
+        if (countdown <= 0) {
+            clearInterval(switchRoleCountdown);
+            switchRoleCountdown = null;
+            document.body.removeChild(overlay);
+            performRoleSwitch(targetRole);
+        }
+    }, 1000);
+}
+
+function performRoleSwitch(role) {
+    currentRole = role;
+    stopAnswerTimer();
+    
+    // Update tab active state
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    if (role === 'human') {
+        document.querySelector('.human-tab').classList.add('active');
+        updateUIForRole('human');
+        // Restore chat history for human
+        restoreChatHistory();
+    } else {
+        document.querySelector('.ai-tab').classList.add('active');
+        updateUIForRole('ai');
+        // Clear chat for AI (they start fresh)
+        document.getElementById('chat').innerHTML = '';
+    }
+    
+    // Close socket and reconnect
+    if (socket) {
+        socket.onclose = null;
+        socket.close();
+    }
+    
+    connectWebSocket();
+}
+
+function updateUIForRole(role) {
+    const header = document.getElementById('header');
+    const msg = document.getElementById('msg');
+    const sendBtn = document.getElementById('sendBtn');
+    const roleBadge = document.getElementById('roleBadge');
+    const hint = document.getElementById('hint');
+    const inputAreaHuman = document.getElementById('inputAreaHuman');
+    const inputAreaAI = document.getElementById('inputAreaAI');
+    
+    if (!header || !msg || !sendBtn || !roleBadge || !hint) {
+        console.error('UI elements not found');
+        return;
+    }
+    
+    if (role === 'human') {
+        header.className = 'header human';
+        msg.className = 'human';
+        msg.placeholder = 'Đặt câu hỏi để tìm ra AI...';
+        sendBtn.className = 'human-btn';
+        roleBadge.textContent = 'HUMAN - Người hỏi';
+        hint.innerHTML = '💡 Đặt câu hỏi thông minh để phát hiện AI';
+        
+        // Show human input, hide AI input
+        if (inputAreaHuman) inputAreaHuman.style.display = 'block';
+        if (inputAreaAI) inputAreaAI.classList.remove('active');
+    } else {
+        header.className = 'header ai';
+        msg.className = 'ai';
+        msg.placeholder = 'Trả lời như một AI...';
+        sendBtn.className = 'ai-btn';
+        roleBadge.textContent = 'AI - Người trả lời (LARP)';
+        hint.innerHTML = '💡 Trả lời ngắn gọn, logic, tránh cảm xúc quá mức';
+        
+        // Hide human input, show AI input
+        if (inputAreaHuman) inputAreaHuman.style.display = 'none';
+        if (inputAreaAI) inputAreaAI.classList.add('active');
+    }
+}
+
+function updateStatus(text, className) {
+    const status = document.getElementById('status');
+    status.textContent = text;
+    status.className = 'status ' + className;
+}
+
+function addMessage(text, type = 'system') {
+    const chat = document.getElementById('chat');
+    const msg = document.createElement('div');
+    msg.className = 'message ' + type;
+    
+    if (type === 'me') {
+        msg.classList.add(currentRole);
+    }
+    
+    if (type === 'system') {
+        msg.innerHTML = escapeHtml(text);
+    } else {
+        msg.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+    }
+    
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+    
+    // Save to chat history (only for human role)
+    if (currentRole === 'human') {
+        chatHistory.push({
+            text: text,
+            type: type,
+            role: currentRole,
+            timestamp: Date.now()
+        });
+        
+        // Limit history to last 100 messages
+        if (chatHistory.length > 100) {
+            chatHistory.shift();
+        }
+    }
+}
+
+function restoreChatHistory() {
+    const chat = document.getElementById('chat');
+    chat.innerHTML = '';
+    
+    chatHistory.forEach(item => {
+        const msg = document.createElement('div');
+        msg.className = 'message ' + item.type;
+        
+        if (item.type === 'me') {
+            msg.classList.add(item.role);
+        }
+        
+        if (item.type === 'system') {
+            msg.innerHTML = escapeHtml(item.text);
+        } else {
+            msg.innerHTML = `<div class="bubble">${escapeHtml(item.text)}</div>`;
+        }
+        
+        chat.appendChild(msg);
+    });
+    
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Profanity filter
+function containsProfanity(text) {
+    const lowerText = text.toLowerCase();
+    return BAD_WORDS.some(word => lowerText.includes(word));
+}
+
+function updateCharCounter() {
+    const msg = document.getElementById('msg');
+    const counter = document.getElementById('charCounter');
+    
+    if (!msg || !counter) return;
+    
+    const length = msg.value.length;
+    
+    counter.textContent = `${length} / ${MAX_CHARS}`;
+    
+    if (length >= MAX_CHARS) {
+        counter.classList.add('error');
+        counter.classList.remove('warning');
+    } else if (length >= MAX_CHARS * 0.8) {
+        counter.classList.add('warning');
+        counter.classList.remove('error');
+    } else {
+        counter.classList.remove('warning', 'error');
+    }
+}
+
+function startAnswerTimer() {
+    const timerBox = document.getElementById('timerBox');
+    const timerValue = document.getElementById('timerValue');
+    const progressBar = document.getElementById('progressBar');
+    
+    if (!timerBox || !timerValue || !progressBar) {
+        console.error('Timer elements not found');
+        return;
+    }
+    
+    timeLeft = ANSWER_TIMEOUT;
+    timerValue.textContent = timeLeft + 's';
+    timerBox.classList.add('show');
+    progressBar.style.width = '100%';
+    progressBar.classList.remove('warning', 'danger');
+    
+    answerTimer = setInterval(() => {
+        timeLeft--;
+        timerValue.textContent = timeLeft + 's';
+        
+        // Update progress bar width
+        const percentage = (timeLeft / ANSWER_TIMEOUT) * 100;
+        progressBar.style.width = percentage + '%';
+        
+        // Change color based on time left
+        if (timeLeft <= 10) {
+            progressBar.classList.add('danger');
+            progressBar.classList.remove('warning');
+        } else if (timeLeft <= 20) {
+            progressBar.classList.add('warning');
+            progressBar.classList.remove('danger');
+        } else {
+            progressBar.classList.remove('warning', 'danger');
+        }
+        
+        if (timeLeft <= 0) {
+            stopAnswerTimer();
+            handleTimeout();
+        }
+    }, 1000);
+}
+
+function stopAnswerTimer() {
+    if (answerTimer) {
+        clearInterval(answerTimer);
+        answerTimer = null;
+    }
+    const timerBox = document.getElementById('timerBox');
+    if (timerBox) {
+        timerBox.classList.remove('show');
+    }
+    timeLeft = ANSWER_TIMEOUT;
+}
+
+function handleTimeout() {
+    addMessage('⏰ Hết giờ! Bạn không trả lời kịp. Đang về phòng chờ...', 'system');
+    
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({  
+            type: 'TIMEOUT'
+        }));
+    }
+    
+    isMatched = false;
+    updateStatus('Đang chờ trong hàng đợi...', 'waiting');
+    document.getElementById('msg').disabled = true;
+    document.getElementById('sendBtn').disabled = true;
+}
+
+function connectWebSocket() {
+    try {
+        socket = new WebSocket(WS_SERVER);
+        
+        socket.onopen = () => {
+            console.log('WebSocket connected as ' + currentRole);
+            updateStatus('Đang chờ đối thủ...', 'waiting');
+            
+            // Send role to server for matching
+            socket.send(JSON.stringify({
+                type: 'ROLE',
+                role: currentRole
+            }));
+        };
+
+        socket.onmessage = (event) => {
+            const data = event.data;
+            
+            // Try to parse as JSON first
+            try {
+                const jsonData = JSON.parse(data);
+                
+                // Handle JSON messages
+                if (jsonData.type === 'QUEUE_UPDATE') {
+                    const position = jsonData.position;
+                    const total = jsonData.total;
+                    updateStatus(`Hàng đợi: Còn ${position}/${total}`, 'waiting');
+                    
+                    if (position === 1 && total > 1) {
+                        addMessage(`⏳ Bạn đang ở vị trí đầu hàng đợi. Có ${total} người đang chờ.`, 'system');
+                    } else if (position === 1 && total === 1) {
+                        addMessage('⏳ Bạn là người duy nhất trong hàng đợi. Chờ người khác tham gia...', 'system');
+                    } else {
+                        addMessage(`⏳ Vị trí của bạn: ${position}/${total} trong hàng đợi`, 'system');
+                    }
+                } else if (jsonData.type === 'DRAWING') {
+                    // Receive drawing from partner
+                    displayDrawing(jsonData.data);
+                    hideTyping();
+                    if (currentRole === 'ai' && isMatched) {
+                        // Enable AI inputs when receiving drawing
+                        const aiTextarea = document.getElementById('aiTextarea');
+                        const aiSubmitBtn = document.getElementById('aiSubmitBtn');
+                        const skipBtn = document.getElementById('skipBtn');
+                        const reportBtn = document.getElementById('reportBtn');
+                        if (aiTextarea) aiTextarea.disabled = false;
+                        if (aiSubmitBtn) aiSubmitBtn.disabled = false;
+                        if (skipBtn) skipBtn.disabled = false;
+                        if (reportBtn) reportBtn.disabled = false;
+                        
+                        startAnswerTimer();
+                    }
+                }
+                return;
+            } catch (e) {
+                // Not JSON, continue with plain text handling
+            }
+            
+            // Handle system messages
+            if (data === "Waiting for another player...") {
+                updateStatus('Đang chờ đối thủ...', 'waiting');
+                addMessage('⏳ Đang chờ người chơi khác...', 'system');
+            } else if (data === "Matched! You can chat.") {
+                isMatched = true;
+                updateStatus('Đã kết nối', 'connected');
+                
+                // Enable inputs based on role
+                if (currentRole === 'human') {
+                    document.getElementById('msg').disabled = false;
+                    document.getElementById('sendBtn').disabled = false;
+                    addMessage('✅ Đã ghép cặp! Bắt đầu đặt câu hỏi để tìm ra AI.', 'system');
+                } else {
+                    // AI role: DON'T enable inputs yet - wait for first question
+                    addMessage('✅ Đã ghép cặp! Chờ câu hỏi từ người chơi...', 'system');
+                }
+            } else if (data === "User disconnected") {
+                isMatched = false;
+                stopAnswerTimer();
+                updateStatus('Đang chờ trong hàng đợi...', 'waiting');
+                
+                // Disable inputs based on role
+                document.getElementById('msg').disabled = true;
+                document.getElementById('sendBtn').disabled = true;
+                const aiTextarea = document.getElementById('aiTextarea');
+                const aiSubmitBtn = document.getElementById('aiSubmitBtn');
+                const skipBtn = document.getElementById('skipBtn');
+                const reportBtn = document.getElementById('reportBtn');
+                if (aiTextarea) aiTextarea.disabled = true;
+                if (aiSubmitBtn) aiSubmitBtn.disabled = true;
+                if (skipBtn) skipBtn.disabled = true;
+                if (reportBtn) reportBtn.disabled = true;
+                
+                addMessage('❌ Đối phương đã ngắt kết nối.', 'system');
+                
+                // DO NOT auto-rematch, just wait in queue
+                // Server will send QUEUE_UPDATE automatically
+            } else if (data === "__TYPING__") {
+                showTyping();
+            } else {
+                // Regular message  
+                if (currentRole === 'ai' && isMatched) {
+                    // Enable AI inputs when receiving first question
+                    const aiTextarea = document.getElementById('aiTextarea');
+                    const aiSubmitBtn = document.getElementById('aiSubmitBtn');
+                    const skipBtn = document.getElementById('skipBtn');
+                    const reportBtn = document.getElementById('reportBtn');
+                    if (aiTextarea) aiTextarea.disabled = false;
+                    if (aiSubmitBtn) aiSubmitBtn.disabled = false;
+                    if (skipBtn) skipBtn.disabled = false;
+                    if (reportBtn) reportBtn.disabled = false;
+                    
+                    // Start timer when AI receives a question
+                    startAnswerTimer();
+                }
+                addMessage(data, 'partner');
+                hideTyping();
+            }
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            updateStatus('Lỗi kết nối', 'disconnected');
+            addMessage('❌ Lỗi kết nối WebSocket', 'system');
+        };
+
+        socket.onclose = (event) => {
+            // Only show message if not intentionally closed
+            if (!event.wasClean) {
+                updateStatus('Mất kết nối', 'disconnected');
+                document.getElementById('msg').disabled = true;
+                document.getElementById('sendBtn').disabled = true;
+                addMessage('❌ Mất kết nối với server', 'system');
+                
+                // Auto reconnect after 3 seconds (only once)
+                setTimeout(() => {
+                    if (!socket || socket.readyState === WebSocket.CLOSED) {
+                        addMessage('🔄 Đang thử kết nối lại...', 'system');
+                        connectWebSocket();
+                    }
+                }, 3000);
+            } else {
+                // Clean close - update status only
+                updateStatus('Đã ngắt kết nối', 'disconnected');
+                document.getElementById('msg').disabled = true;
+                document.getElementById('sendBtn').disabled = true;
+            }
+        };
+        
+    } catch (error) {
+        console.error('Connection error:', error);
+        updateStatus('Không thể kết nối', 'disconnected');
+        addMessage('❌ Không thể kết nối: ' + error.message, 'system');
+    }
+}
+
+function send() {
+    const msgInput = document.getElementById('msg');
+    const msg = msgInput.value.trim();
+    
+    if (!msg) return;
+    
+    if (!isMatched || !socket || socket.readyState !== WebSocket.OPEN) {
+        alert('Không thể gửi tin nhắn. Vui lòng đợi kết nối.');
+        return;
+    }
+    
+    // Check profanity
+    if (containsProfanity(msg)) {
+        alert('⚠️ Cảnh báo: Tin nhắn chứa từ ngữ không phù hợp. Vui lòng chỉnh sửa!');
+        return;
+    }
+    
+    // Check length
+    if (msg.length > MAX_CHARS) {
+        alert(`Tin nhắn vượt quá ${MAX_CHARS} ký tự!`);
+        return;
+    }
+    
+    socket.send(msg);
+    addMessage(msg, 'me');
+    msgInput.value = '';
+    updateCharCounter();
+    
+    // If AI sent answer, stop timer
+    if (currentRole === 'ai') {
+        stopAnswerTimer();
+    }
+}
+
+function showTyping() {
+    const typing = document.getElementById('typing');
+    if (typing) {
+        typing.classList.add('show');
+    }
+    
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        hideTyping();
+    }, 2000);
+}
+
+function hideTyping() {
+    const typing = document.getElementById('typing');
+    if (typing) {
+        typing.classList.remove('show');
+    }
+}
+
+let typingSendTimeout;
+
+// ===== AI Response Functions =====
+let currentResponseTab = 'write';
+let currentTool = 'pen';
+let isDrawing = false;
+let canvas, ctx;
+
+function switchResponseTab(tab) {
+    currentResponseTab = tab;
+    
+    // Update tab buttons
+    document.querySelectorAll('.response-tab').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Update panels
+    document.getElementById('writePanel').classList.remove('active');
+    document.getElementById('drawPanel').classList.remove('active');
+    
+    if (tab === 'write') {
+        document.getElementById('writePanel').classList.add('active');
+    } else {
+        document.getElementById('drawPanel').classList.add('active');
+    }
+}
+
+function selectTool(tool) {
+    currentTool = tool;
+    
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    if (tool === 'pen') {
+        document.getElementById('penTool').classList.add('active');
+    } else if (tool === 'eraser') {
+        document.getElementById('eraserTool').classList.add('active');
+    }
+}
+
+function clearCanvas() {
+    if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
+function submitAIResponse() {
+    if (!isMatched || !socket || socket.readyState !== WebSocket.OPEN) {
+        alert('Không thể gửi. Vui lòng đợi kết nối.');
+        return;
+    }
+    
+    let content = '';
+    
+    if (currentResponseTab === 'write') {
+        const textarea = document.getElementById('aiTextarea');
+        content = textarea.value.trim();
+        
+        if (!content) {
+            alert('Vui lòng nhập nội dung trả lời!');
+            return;
+        }
+        
+        if (containsProfanity(content)) {
+            alert('⚠️ Cảnh báo: Tin nhắn chứa từ ngữ không phù hợp!');
+            return;
+        }
+        
+        // Send text message
+        socket.send(content);
+        addMessage(content, 'me');
+        textarea.value = '';
+        updateAICharCounter();
+    } else {
+        // Send drawing as data URL
+        const dataURL = canvas.toDataURL();
+        
+        // Check if canvas is blank
+        const blankCanvas = document.createElement('canvas');
+        blankCanvas.width = canvas.width;
+        blankCanvas.height = canvas.height;
+        
+        if (dataURL === blankCanvas.toDataURL()) {
+            alert('Vui lòng vẽ gì đó!');
+            return;
+        }
+        
+        socket.send(JSON.stringify({
+            type: 'DRAWING',
+            data: dataURL
+        }));
+        
+        addMessage('🎨 [Đã gửi hình vẽ]', 'me');
+        clearCanvas();
+    }
+    
+    // Stop timer after response
+    if (currentRole === 'ai') {
+        stopAnswerTimer();
+    }
+}
+
+function showSkipPopup() {
+    document.getElementById('popupOverlay').classList.add('show');
+    document.getElementById('skipPopup').classList.add('show');
+}
+
+function hideSkipPopup() {
+    document.getElementById('popupOverlay').classList.remove('show');
+    document.getElementById('skipPopup').classList.remove('show');
+}
+
+function confirmSkip() {
+    hideSkipPopup();
+    
+    if (!isMatched || !socket || socket.readyState !== WebSocket.OPEN) {
+        return;
+    }
+    
+    // Send skip to server
+    socket.send(JSON.stringify({ type: 'SKIP' }));
+    
+    addMessage('⏭️ Bạn đã bỏ qua câu hỏi. Đang về phòng chờ...', 'system');
+    
+    isMatched = false;
+    stopAnswerTimer();
+    updateStatus('Đang chờ trong hàng đợi...', 'waiting');
+    
+    // Disable AI inputs
+    const aiTextarea = document.getElementById('aiTextarea');
+    const aiSubmitBtn = document.getElementById('aiSubmitBtn');
+    const skipBtn = document.getElementById('skipBtn');
+    const reportBtn = document.getElementById('reportBtn');
+    if (aiTextarea) aiTextarea.disabled = true;
+    if (aiSubmitBtn) aiSubmitBtn.disabled = true;
+    if (skipBtn) skipBtn.disabled = true;
+    if (reportBtn) reportBtn.disabled = true;
+    
+    // Clear inputs
+    if (aiTextarea) aiTextarea.value = '';
+    clearCanvas();
+}
+
+function reportQuestion() {
+    const reason = prompt('Lý do báo cáo câu hỏi này:');
+    if (reason && reason.trim()) {
+        socket.send(JSON.stringify({
+            type: 'REPORT',
+            reason: reason.trim()
+        }));
+        alert('Đã gửi báo cáo. Cảm ơn bạn!');
+    }
+}
+
+function updateAICharCounter() {
+    const textarea = document.getElementById('aiTextarea');
+    const counter = document.getElementById('aiCharCounter');
+    if (textarea && counter) {
+        const length = textarea.value.length;
+        counter.textContent = `${length}/1000 chars`;
+        
+        if (length > 900) {
+            counter.style.color = '#ef4444';
+        } else if (length > 700) {
+            counter.style.color = '#f59e0b';
+        } else {
+            counter.style.color = '#999';
+        }
+    }
+}
+
+function displayDrawing(dataURL) {
+    const chat = document.getElementById('chat');
+    const msg = document.createElement('div');
+    msg.className = 'message partner';
+    
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    
+    const img = document.createElement('img');
+    img.src = dataURL;
+    img.style.maxWidth = '100%';
+    img.style.borderRadius = '8px';
+    img.alt = 'Drawing';
+    
+    bubble.appendChild(img);
+    msg.appendChild(bubble);
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// Initialize on page load
+window.addEventListener('DOMContentLoaded', () => {
+    updateUIForRole('human');
+    updateCharCounter();
+    
+    const msgInput = document.getElementById('msg');
+    
+    if (msgInput) {
+        msgInput.addEventListener('input', () => {
+            updateCharCounter();
+            
+            if (!isMatched || !socket || socket.readyState !== WebSocket.OPEN) return;
+            
+            clearTimeout(typingSendTimeout);
+            typingSendTimeout = setTimeout(() => {
+                socket.send('__TYPING__');
+            }, 300);
+        });
+
+        // Enter to send
+        msgInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                send();
+            }
+        });
+    }
+    
+    // Initialize AI textarea
+    const aiTextarea = document.getElementById('aiTextarea');
+    if (aiTextarea) {
+        aiTextarea.addEventListener('input', updateAICharCounter);
+    }
+    
+    // Initialize canvas
+    canvas = document.getElementById('drawCanvas');
+    if (canvas) {
+        ctx = canvas.getContext('2d');
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#000000';
+        
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchmove', handleTouch);
+        canvas.addEventListener('touchend', stopDrawing);
+        
+        // Color picker
+        const colorPicker = document.getElementById('colorPicker');
+        if (colorPicker) {
+            colorPicker.addEventListener('change', (e) => {
+                ctx.strokeStyle = e.target.value;
+            });
+        }
+    }
+    
+    connectWebSocket();
+});
+
+// Canvas drawing functions
+function startDrawing(e) {
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    if (currentTool === 'pen') {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.lineWidth = 3;
+    } else if (currentTool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = 20;
+    }
+    
+    ctx.lineTo(x, y);
+    ctx.stroke();
+}
+
+function stopDrawing() {
+    isDrawing = false;
+}
+
+function handleTouch(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+    });
+    canvas.dispatchEvent(mouseEvent);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Thiết lập MIME type cho WebAssembly
+AddType application/wasm .wasm
+
+# Tắt compression cho file WASM để tránh lỗi decoding
+<FilesMatch "\.wasm$">
+    SetEnv no-gzip 1
+    RemoveOutputFilter DEFLATE
+</FilesMatch>
+
+# Cho phép CORS nếu cần
+<IfModule mod_headers.c>
+    <FilesMatch "\.(wasm|js)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>

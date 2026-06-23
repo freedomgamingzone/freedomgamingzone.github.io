@@ -11,9 +11,17 @@
 	<link rel="shortcut icon" type="image/png" href="./favicon.png">
 	
 	<script>
-		// Fix JSON parse errors by clearing corrupted data
+		// Global error handler to prevent crashes
+		window.addEventListener('error', function(e) {
+			console.log('Error caught:', e.message);
+			e.preventDefault();
+			return true;
+		});
+		
+		// Clear all storage to fix corrupted data
 		try {
-			localStorage.removeItem('lime-run3-data');
+			localStorage.clear();
+			sessionStorage.clear();
 		} catch(e) {}
 	</script>
 	
@@ -103,7 +111,15 @@
 	<div id="openfl-content"></div>
 	
 	<script type="text/javascript">
-		lime.embed ("Run3", "openfl-content", 800, 600, { parameters: {} });
+		try {
+			lime.embed ("Run3", "openfl-content", 800, 600, { parameters: {} });
+		} catch(e) {
+			console.error('Game load error:', e);
+			document.getElementById('openfl-content').innerHTML = '<div style="color:white;padding:20px;text-align:center;">Loading game... Please refresh if it takes too long.</div>';
+			setTimeout(function() {
+				location.reload();
+			}, 2000);
+		}
 	</script>
 	
 <script>function fnSendMsg(evt){

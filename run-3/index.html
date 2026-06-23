@@ -10,6 +10,13 @@
 	
 	<link rel="shortcut icon" type="image/png" href="./favicon.png">
 	
+	<script>
+		// Fix JSON parse errors by clearing corrupted data
+		try {
+			localStorage.removeItem('lime-run3-data');
+		} catch(e) {}
+	</script>
+	
 	<script type="text/javascript" src="./Run3.js"></script>
 	
 	<script>

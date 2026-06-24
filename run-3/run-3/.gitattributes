@@ -1,0 +1,8 @@
+# Run 3 ships level/text data files (*.txt) that the game parses with a
+# CRLF-aware parser (it splits records on "\r\n"). GitHub Pages serves the
+# bytes stored in the repo, so those bytes MUST stay CRLF. Marking them
+# -text disables ALL line-ending conversion: Git stores and checks out the
+# files exactly as-is (CRLF). Without this, autocrlf stores them as LF, the
+# parser fails to split, and JSON.parse throws "Unexpected non-whitespace
+# character after JSON at position 152".
+*.txt -text

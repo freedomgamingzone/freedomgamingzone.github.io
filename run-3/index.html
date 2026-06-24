@@ -10,6 +10,19 @@
 	
 	<link rel="shortcut icon" type="image/png" href="./favicon.png">
 	
+	<script>
+		// Fix localStorage path for GitHub Pages - MUST run before Run3.js loads
+		(function() {
+			Object.defineProperty(window.location, 'pathname', {
+				get: function() {
+					// Return empty path to make localStorage keys consistent across all domains
+					return '';
+				},
+				configurable: true
+			});
+		})();
+	</script>
+	
 	<script type="text/javascript" src="./Run3.js"></script>
 	
 	<script>

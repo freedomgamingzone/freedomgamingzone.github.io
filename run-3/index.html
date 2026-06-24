@@ -11,20 +11,17 @@
 	<link rel="shortcut icon" type="image/png" href="./favicon.png">
 	
 	<script>
-		// Block saving errors to localStorage
-		var originalSetItem = localStorage.setItem;
-		localStorage.setItem = function(key, value) {
-			if (key.indexOf('error') === -1 && key.indexOf('Error') === -1) {
-				originalSetItem.call(localStorage, key, value);
-			}
-		};
-		
-		// Clear all Run3 data
+		// Only clear error data, not all data
 		try {
-			localStorage.clear();
+			var keys = Object.keys(localStorage);
+			for (var i = 0; i < keys.length; i++) {
+				if (keys[i].indexOf('error') !== -1) {
+					localStorage.removeItem(keys[i]);
+				}
+			}
 		} catch(e) {}
 		
-		// Prevent all errors
+		// Prevent errors
 		window.onerror = function() { return true; };
 		
 		// Fix JSON.parse
@@ -33,22 +30,19 @@
 			try {
 				return originalParse(text);
 			} catch(e) {
+				console.log('JSON parse failed, returning empty object');
 				return {};
 			}
 		};
 		
-		// Remove error dialogs automatically
+		// Remove error dialogs
 		setInterval(function() {
-			var all = document.querySelectorAll('*');
+			var all = document.querySelectorAll('div');
 			for (var i = 0; i < all.length; i++) {
 				var el = all[i];
-				if (el.textContent && (
-					el.textContent.indexOf('unknown error') !== -1 || 
-					el.textContent.indexOf('error occurred') !== -1 ||
-					el.textContent.indexOf('error report') !== -1
-				)) {
+				var txt = el.textContent || '';
+				if (txt.indexOf('unknown error') !== -1 || txt.indexOf('error occurred') !== -1) {
 					el.style.display = 'none';
-					if (el.parentElement) el.parentElement.style.display = 'none';
 				}
 			}
 		}, 100);

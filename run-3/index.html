@@ -17,13 +17,36 @@
 		window.addEventListener('error', function(e) {
 			if (e.message && (e.message.indexOf('JSON') !== -1 || e.message.indexOf('savedCurrentLevel') !== -1)) {
 				console.error('Detected localStorage corruption. Clearing data...');
-				try {
-					localStorage.clear();
-					window.location.reload();
-				} catch (err) {
-					console.error('Failed to clear localStorage:', err);
+				
+				// Check if we already tried to fix this to avoid infinite reload loop
+				var reloadAttempts = sessionStorage.getItem('run3-reload-attempts') || '0';
+				reloadAttempts = parseInt(reloadAttempts);
+				
+				if (reloadAttempts < 1) {
+					try {
+						// Clear localStorage
+						localStorage.clear();
+						// Mark that we attempted a reload
+						sessionStorage.setItem('run3-reload-attempts', (reloadAttempts + 1).toString());
+						console.log('Reloading page...');
+						window.location.reload();
+					} catch (err) {
+						console.error('Failed to clear localStorage:', err);
+					}
+				} else {
+					// Already tried to reload, stop infinite loop
+					console.error('Failed to fix localStorage after reload. Please clear your browser cache manually.');
+					sessionStorage.removeItem('run3-reload-attempts');
+					alert('Game data is corrupted. Please press Ctrl+Shift+Delete to clear your browser cache, then reload the page.');
 				}
 			}
+		});
+		
+		// Reset reload counter when page loads successfully
+		window.addEventListener('load', function() {
+			setTimeout(function() {
+				sessionStorage.removeItem('run3-reload-attempts');
+			}, 2000);
 		});
 		
 		window.addEventListener ("touchmove", function (event) { event.preventDefault (); }, { capture: false, passive: false });
@@ -109,30 +132,40 @@
 	<div id="openfl-content"></div>
 	
 	<script type="text/javascript">
-		// Clear corrupted localStorage data to prevent JSON parsing errors
+		// Preemptively clear any corrupted localStorage before game starts
 		try {
 			if (localStorage) {
-				// Check if there's an error stored
-				var errorKey = '/run-3/error';
-				if (localStorage.getItem(errorKey)) {
-					console.log('Clearing corrupted localStorage data...');
-					// Clear all run-3 related data
-					var keysToRemove = [];
-					for (var i = 0; i < localStorage.length; i++) {
-						var key = localStorage.key(i);
-						if (key && key.indexOf('/run-3/') === 0) {
-							keysToRemove.push(key);
+				// Try to validate localStorage data
+				var testKeys = ['/run-3/error', '/run-3/last'];
+				var hasCorruption = false;
+				
+				for (var i = 0; i < testKeys.length; i++) {
+					try {
+						var testData = localStorage.getItem(testKeys[i]);
+						if (testData) {
+							JSON.parse(testData);
 						}
+					} catch (parseError) {
+						console.warn('Found corrupted data at key:', testKeys[i]);
+						hasCorruption = true;
+						break;
 					}
-					keysToRemove.forEach(function(key) {
-						localStorage.removeItem(key);
-					});
-					console.log('localStorage cleared. Reloading...');
-					window.location.reload();
+				}
+				
+				if (hasCorruption) {
+					console.log('Clearing corrupted localStorage data...');
+					localStorage.clear();
+					console.log('localStorage cleared successfully.');
 				}
 			}
 		} catch (e) {
-			console.error('Error clearing localStorage:', e);
+			console.error('Error checking localStorage:', e);
+			// If we can't even check, clear it
+			try {
+				localStorage.clear();
+			} catch (clearErr) {
+				console.error('Cannot clear localStorage:', clearErr);
+			}
 		}
 		
 		lime.embed ("Run3", "openfl-content", 800, 600, { parameters: {} });

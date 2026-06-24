@@ -11,14 +11,59 @@
 	<link rel="shortcut icon" type="image/png" href="./favicon.png">
 	
 	<script>
-		// ONE-TIME FIX: Clear all localStorage for this domain to fix corrupted data
-		// After the game works, you can remove this script block
-		if (!sessionStorage.getItem('run3_cleared')) {
-			console.log('[Run3 Fix] Clearing ALL localStorage to fix corrupted data...');
-			localStorage.clear();
-			sessionStorage.setItem('run3_cleared', 'true');
-			console.log('[Run3 Fix] localStorage cleared. Game will initialize fresh.');
-		}
+		// CRITICAL FIX: Patch Storage.prototype to normalize localStorage keys
+		// This must run BEFORE Run3.js loads
+		(function() {
+			// One-time cleanup
+			if (!sessionStorage.getItem('run3_storage_patched')) {
+				console.log('[Run3 Fix] Clearing corrupted data and patching storage...');
+				localStorage.clear();
+				sessionStorage.setItem('run3_storage_patched', 'true');
+			}
+			
+			// Save original methods
+			var _getItem = Storage.prototype.getItem;
+			var _setItem = Storage.prototype.setItem;
+			var _removeItem = Storage.prototype.removeItem;
+			
+			// Normalize key: /run-3/abc -> /abc, /g4wgzmu/xyz -> /xyz
+			function normalizeKey(key) {
+				return String(key).replace(/^\/[^\/]+\//, '/');
+			}
+			
+			// Patch Storage prototype
+			Storage.prototype.getItem = function(key) {
+				var norm = normalizeKey(key);
+				if (key !== norm) console.log('[LS get]', key, '->', norm);
+				return _getItem.call(this, norm);
+			};
+			
+			Storage.prototype.setItem = function(key, value) {
+				var norm = normalizeKey(key);
+				if (key !== norm) console.log('[LS set]', key, '->', norm);
+				return _setItem.call(this, norm, value);
+			};
+			
+			Storage.prototype.removeItem = function(key) {
+				var norm = normalizeKey(key);
+				if (key !== norm) console.log('[LS remove]', key, '->', norm);
+				return _removeItem.call(this, norm);
+			};
+			
+			console.log('[Run3 Fix] Storage.prototype patched successfully');
+			
+			// DEBUG: Wrap JSON.parse to catch parsing errors
+			var _JSONparse = JSON.parse;
+			JSON.parse = function(text) {
+				try {
+					return _JSONparse(text);
+				} catch(e) {
+					console.error('[JSON Parse Error]', e.message);
+					console.error('[JSON Data]', text ? text.substring(0, 200) : 'null');
+					throw e;
+				}
+			};
+		})();
 	</script>
 	
 	<script type="text/javascript" src="./Run3.js"></script>

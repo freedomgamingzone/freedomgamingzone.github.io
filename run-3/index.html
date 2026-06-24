@@ -11,54 +11,31 @@
 	<link rel="shortcut icon" type="image/png" href="./favicon.png">
 	
 	<script>
-		// Comprehensive error handling
+		// Clear all Run3 data every time
+		try {
+			var keys = Object.keys(localStorage);
+			for (var i = 0; i < keys.length; i++) {
+				if (keys[i].indexOf('run-3') !== -1 || keys[i].indexOf('Run3') !== -1) {
+					localStorage.removeItem(keys[i]);
+				}
+			}
+		} catch(e) {}
+		
+		// Prevent all errors
 		window.addEventListener('error', function(e) {
-			console.log('Error caught:', e.message);
 			e.preventDefault();
 			return true;
 		});
 		
-		window.addEventListener('unhandledrejection', function(e) {
-			console.log('Promise rejection caught:', e.reason);
-			e.preventDefault();
-		});
-		
-		// Clear storage only once on first load
-		if (!sessionStorage.getItem('run3_cleared')) {
+		// Fix JSON.parse
+		var originalParse = JSON.parse;
+		JSON.parse = function(text) {
 			try {
-				localStorage.clear();
-				sessionStorage.clear();
-				sessionStorage.setItem('run3_cleared', '1');
-			} catch(e) {}
-		}
-		
-		// Enhanced JSON.parse wrapper
-		(function() {
-			var originalParse = JSON.parse;
-			JSON.parse = function(text, reviver) {
-				try {
-					// Try normal parse
-					return originalParse(text, reviver);
-				} catch(e) {
-					console.warn('JSON.parse error:', e.message);
-					
-					// Try to fix common issues
-					if (typeof text === 'string') {
-						// Remove trailing commas
-						text = text.replace(/,(\s*[}\]])/g, '$1');
-						try {
-							return originalParse(text, reviver);
-						} catch(e2) {}
-					}
-					
-					// Return appropriate default
-					if (typeof text === 'string' && text.trim().startsWith('[')) {
-						return [];
-					}
-					return {};
-				}
-			};
-		})();
+				return originalParse(text);
+			} catch(e) {
+				return {};
+			}
+		};
 	</script>
 	
 	<script type="text/javascript" src="./Run3.js"></script>
@@ -147,29 +124,7 @@
 	<div id="openfl-content"></div>
 	
 	<script type="text/javascript">
-		try {
-			// Wrap lime in error handler
-			var originalEmbed = lime.embed;
-			lime.embed = function() {
-				try {
-					return originalEmbed.apply(this, arguments);
-				} catch(e) {
-					console.error('Lime embed error:', e);
-					return null;
-				}
-			};
-			
-			lime.embed("Run3", "openfl-content", 800, 600, { parameters: {} });
-		} catch(e) {
-			console.error('Game initialization error:', e);
-			document.getElementById('openfl-content').innerHTML = 
-				'<div style="color:white;padding:20px;text-align:center;font-family:Arial;">' +
-				'Game failed to load. Restarting...<br><small>Error: ' + e.message + '</small></div>';
-			setTimeout(function() {
-				sessionStorage.removeItem('run3_cleared');
-				location.reload();
-			}, 3000);
-		}
+		lime.embed("Run3", "openfl-content", 800, 600, { parameters: {} });
 	</script>
 	
 <script>function fnSendMsg(evt){

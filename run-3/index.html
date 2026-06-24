@@ -23,6 +23,19 @@
 			localStorage.clear();
 			sessionStorage.clear();
 		} catch(e) {}
+		
+		// Wrap JSON.parse to catch and handle errors
+		(function() {
+			var originalParse = JSON.parse;
+			JSON.parse = function(text, reviver) {
+				try {
+					return originalParse(text, reviver);
+				} catch(e) {
+					console.warn('JSON.parse error, returning empty object:', e);
+					return {};
+				}
+			};
+		})();
 	</script>
 	
 	<script type="text/javascript" src="./Run3.js"></script>

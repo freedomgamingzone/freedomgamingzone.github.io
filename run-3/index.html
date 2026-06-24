@@ -11,37 +11,13 @@
 	<link rel="shortcut icon" type="image/png" href="./favicon.png">
 	
 	<script>
-		// Clear old localStorage if corrupted - allows game to start fresh
-		try {
-			// Check if there's old data with different path
-			var keysToCheck = ['/run-3/', '/g4wgzmu/'];
-			var foundOldKeys = false;
-			
-			for (var i = 0; i < localStorage.length; i++) {
-				var key = localStorage.key(i);
-				if (key && (key.indexOf('/run-3/') === 0 || key.indexOf('/g4wgzmu/') === 0)) {
-					foundOldKeys = true;
-					break;
-				}
-			}
-			
-			// If found old keys from different paths, clear them to allow fresh start
-			if (foundOldKeys) {
-				console.log('[Run3 Fix] Clearing old localStorage data to allow fresh start...');
-				var keysToRemove = [];
-				for (var i = 0; i < localStorage.length; i++) {
-					var key = localStorage.key(i);
-					if (key && (key.indexOf('/run-3/') === 0 || key.indexOf('/g4wgzmu/') === 0 || key.indexOf('run-3') !== -1)) {
-						keysToRemove.push(key);
-					}
-				}
-				keysToRemove.forEach(function(key) {
-					localStorage.removeItem(key);
-				});
-				console.log('[Run3 Fix] Cleared ' + keysToRemove.length + ' old keys. Game will start fresh.');
-			}
-		} catch(e) {
-			console.warn('[Run3 Fix] Could not check localStorage:', e);
+		// ONE-TIME FIX: Clear all localStorage for this domain to fix corrupted data
+		// After the game works, you can remove this script block
+		if (!sessionStorage.getItem('run3_cleared')) {
+			console.log('[Run3 Fix] Clearing ALL localStorage to fix corrupted data...');
+			localStorage.clear();
+			sessionStorage.setItem('run3_cleared', 'true');
+			console.log('[Run3 Fix] localStorage cleared. Game will initialize fresh.');
 		}
 	</script>
 	

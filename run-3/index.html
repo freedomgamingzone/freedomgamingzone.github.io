@@ -11,31 +11,44 @@
 	<link rel="shortcut icon" type="image/png" href="./favicon.png">
 	
 	<script>
-		// Only clear error data, not all data
+		// Only clear error data from localStorage
 		try {
 			var keys = Object.keys(localStorage);
 			for (var i = 0; i < keys.length; i++) {
-				if (keys[i].indexOf('error') !== -1) {
+				if (keys[i].indexOf('error') !== -1 || keys[i].indexOf('Error') !== -1) {
 					localStorage.removeItem(keys[i]);
 				}
 			}
 		} catch(e) {}
 		
-		// Prevent errors
-		window.onerror = function() { return true; };
-		
-		// Fix JSON.parse
-		var originalParse = JSON.parse;
-		JSON.parse = function(text) {
+		// Wrap localStorage.getItem to handle corrupted data
+		var originalGetItem = localStorage.getItem;
+		localStorage.getItem = function(key) {
 			try {
-				return originalParse(text);
+				var value = originalGetItem.call(localStorage, key);
+				if (value && value.length > 0) {
+					// Test if it's valid JSON
+					try {
+						JSON.parse(value);
+					} catch(e) {
+						console.log('Corrupted data in localStorage key:', key);
+						localStorage.removeItem(key);
+						return null;
+					}
+				}
+				return value;
 			} catch(e) {
-				console.log('JSON parse failed, returning empty object');
-				return {};
+				return null;
 			}
 		};
 		
-		// Remove error dialogs
+		// Prevent errors from crashing the game
+		window.onerror = function(msg, url, line, col, error) {
+			console.log('Error:', msg);
+			return true;
+		};
+		
+		// Hide error dialogs
 		setInterval(function() {
 			var all = document.querySelectorAll('div');
 			for (var i = 0; i < all.length; i++) {

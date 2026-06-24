@@ -13,6 +13,19 @@
 	<script type="text/javascript" src="./Run3.js"></script>
 	
 	<script>
+		// Global error handler to catch localStorage and JSON parsing errors
+		window.addEventListener('error', function(e) {
+			if (e.message && (e.message.indexOf('JSON') !== -1 || e.message.indexOf('savedCurrentLevel') !== -1)) {
+				console.error('Detected localStorage corruption. Clearing data...');
+				try {
+					localStorage.clear();
+					window.location.reload();
+				} catch (err) {
+					console.error('Failed to clear localStorage:', err);
+				}
+			}
+		});
+		
 		window.addEventListener ("touchmove", function (event) { event.preventDefault (); }, { capture: false, passive: false });
 		if (typeof window.devicePixelRatio != 'undefined' && window.devicePixelRatio > 2) {
 			var meta = document.getElementById ("viewport");
@@ -42,10 +55,10 @@
 		}
 		@font-face {
 			font-family: 'Permanent Marker';
-			src: url('font/PERMANENTMARKER.eot?#iefix') format('embedded-opentype'),
-			url('font/PERMANENTMARKER.woff') format('woff'),
-			url('font/PERMANENTMARKER.TTF') format('truetype'),
-			url('font/PERMANENTMARKER.svg#Permanent%20Marker') format('svg');
+			src: url('font/PERMANENTMARKER.TTF') format('truetype'),
+			url('font/PERMANENTMARKER.svg#Permanent%20Marker') format('svg'),
+			url('font/PERMANENTMARKER.eot?#iefix') format('embedded-opentype'),
+			url('font/PERMANENTMARKER.woff') format('woff');
 			font-weight: normal;
 			font-style: normal;
 		}
@@ -96,6 +109,32 @@
 	<div id="openfl-content"></div>
 	
 	<script type="text/javascript">
+		// Clear corrupted localStorage data to prevent JSON parsing errors
+		try {
+			if (localStorage) {
+				// Check if there's an error stored
+				var errorKey = '/run-3/error';
+				if (localStorage.getItem(errorKey)) {
+					console.log('Clearing corrupted localStorage data...');
+					// Clear all run-3 related data
+					var keysToRemove = [];
+					for (var i = 0; i < localStorage.length; i++) {
+						var key = localStorage.key(i);
+						if (key && key.indexOf('/run-3/') === 0) {
+							keysToRemove.push(key);
+						}
+					}
+					keysToRemove.forEach(function(key) {
+						localStorage.removeItem(key);
+					});
+					console.log('localStorage cleared. Reloading...');
+					window.location.reload();
+				}
+			}
+		} catch (e) {
+			console.error('Error clearing localStorage:', e);
+		}
+		
 		lime.embed ("Run3", "openfl-content", 800, 600, { parameters: {} });
 	</script>
 	

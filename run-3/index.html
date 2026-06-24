@@ -10,110 +10,9 @@
 	
 	<link rel="shortcut icon" type="image/png" href="./favicon.png">
 	
-	<script type="text/javascript">
-		// CRITICAL: Clear localStorage only if URL has ?cleardata parameter
-		(function() {
-			try {
-				var urlParams = new URLSearchParams(window.location.search);
-				if (urlParams.get('cleardata') === '1') {
-					console.log('Clearing localStorage as requested by URL parameter...');
-					if (window.localStorage) {
-						localStorage.clear();
-					}
-					// Remove the parameter and redirect
-					window.history.replaceState({}, document.title, window.location.pathname);
-					console.log('localStorage cleared. Game will restart fresh.');
-					return;
-				}
-				
-				// VALIDATION: Check localStorage for corruption BEFORE loading Run3.js
-				if (window.localStorage) {
-					var hasCorruption = false;
-					var errorCount = 0;
-					
-					// Check if we've already tried clearing
-					var clearAttempts = sessionStorage.getItem('run3-clear-attempts') || '0';
-					clearAttempts = parseInt(clearAttempts);
-					
-					if (clearAttempts >= 2) {
-						console.error('Clearing data did not fix the issue. Stopping auto-fix.');
-						sessionStorage.removeItem('run3-clear-attempts');
-						return;
-					}
-					
-					// Scan all localStorage keys related to this game
-					for (var i = 0; i < localStorage.length; i++) {
-						try {
-							var key = localStorage.key(i);
-							if (key && (key.indexOf('/run-3/') === 0 || key.indexOf('run3') !== -1)) {
-								var value = localStorage.getItem(key);
-								if (value && value.trim().length > 0) {
-									// Try to parse as JSON if it looks like JSON
-									if (value.charAt(0) === '{' || value.charAt(0) === '[' || value.charAt(0) === '"') {
-										try {
-											JSON.parse(value);
-										} catch (parseErr) {
-											console.error('Corrupted localStorage at key:', key, parseErr);
-											hasCorruption = true;
-											errorCount++;
-											if (errorCount > 1) break; // Don't check all, we found enough
-										}
-									}
-								}
-							}
-						} catch (keyErr) {
-							console.error('Error checking localStorage key:', keyErr);
-							hasCorruption = true;
-							break;
-						}
-					}
-					
-					if (hasCorruption) {
-						console.warn('Detected corrupted localStorage. Redirecting to clear data...');
-						sessionStorage.setItem('run3-clear-attempts', (clearAttempts + 1).toString());
-						window.location.href = window.location.pathname + '?cleardata=1';
-						return;
-					} else {
-						// Reset counter on successful validation
-						sessionStorage.removeItem('run3-clear-attempts');
-					}
-				}
-			} catch (e) {
-				console.error('Error in localStorage validation:', e);
-			}
-		})();
-	</script>
-	
 	<script type="text/javascript" src="./Run3.js"></script>
 	
 	<script>
-		// Runtime error handler (backup in case validation missed something)
-		window.addEventListener('error', function(e) {
-			if (e.message && (e.message.indexOf('JSON') !== -1 || 
-			    e.message.indexOf('savedCurrentLevel') !== -1 || 
-			    e.message.indexOf('localStorage') !== -1 ||
-			    e.message.indexOf('Cannot read properties of undefined') !== -1)) {
-				console.error('Runtime game error detected:', e.message);
-				
-				// Check if we've already tried to fix this
-				var clearAttempts = sessionStorage.getItem('run3-clear-attempts') || '0';
-				clearAttempts = parseInt(clearAttempts);
-				
-				if (clearAttempts >= 2) {
-					console.error('Error persists after multiple fix attempts.');
-					alert('Game cannot load properly. Please:\n1. Close this tab\n2. Press Ctrl+Shift+Delete\n3. Clear browsing data\n4. Reopen the game');
-					return;
-				}
-				
-				// Ask user before clearing
-				var confirmed = confirm('Game encountered an error. Reset game data to fix?\n\nClick OK to clear data and reload.\nClick Cancel to continue (may not work).');
-				if (confirmed) {
-					sessionStorage.setItem('run3-clear-attempts', (clearAttempts + 1).toString());
-					window.location.href = window.location.pathname + '?cleardata=1';
-				}
-			}
-		});
-		
 		window.addEventListener ("touchmove", function (event) { event.preventDefault (); }, { capture: false, passive: false });
 		if (typeof window.devicePixelRatio != 'undefined' && window.devicePixelRatio > 2) {
 			var meta = document.getElementById ("viewport");
@@ -143,10 +42,10 @@
 		}
 		@font-face {
 			font-family: 'Permanent Marker';
-			src: url('font/PERMANENTMARKER.TTF') format('truetype'),
-			url('font/PERMANENTMARKER.svg#Permanent%20Marker') format('svg'),
-			url('font/PERMANENTMARKER.eot?#iefix') format('embedded-opentype'),
-			url('font/PERMANENTMARKER.woff') format('woff');
+			src: url('font/PERMANENTMARKER.eot?#iefix') format('embedded-opentype'),
+			url('font/PERMANENTMARKER.woff') format('woff'),
+			url('font/PERMANENTMARKER.TTF') format('truetype'),
+			url('font/PERMANENTMARKER.svg#Permanent%20Marker') format('svg');
 			font-weight: normal;
 			font-style: normal;
 		}
